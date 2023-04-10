@@ -3,6 +3,12 @@ data "aws_vpc" "existing_vpc" {
   id = "vpc-076c009696d0b84e6"
 }
 
+###create new prefix CIDR on vpn
+resource "aws_vpc_ipv4_cidr_block_association" "new_cidr" {
+  vpc_id     = data.aws_vpc.existing_vpc.id
+  cidr_block = "172.16.0.0/16"
+}
+
 resource "aws_subnet" "web" {
   vpc_id                  = data.aws_vpc.existing_vpc.id
   cidr_block              = "172.16.38.0/23"
@@ -11,6 +17,7 @@ resource "aws_subnet" "web" {
   tags = {
     Name = "web"
   }
+  depends_on = [aws_vpc_ipv4_cidr_block_association.new_cidr]
 }
 
 resource "aws_subnet" "web_2" {
@@ -21,6 +28,7 @@ resource "aws_subnet" "web_2" {
   tags = {
     Name = "web_2"
   }
+  depends_on = [aws_vpc_ipv4_cidr_block_association.new_cidr]
 }
 
 
@@ -162,7 +170,7 @@ resource "aws_instance" "web" {
     Name = "web-server"
   }
   depends_on = [aws_efs_mount_target.html]
-  user_data = <<-EOF
+  user_data  = <<-EOF
               #!/bin/bash
               apt-get update
               apt-get install -y apache2
@@ -192,7 +200,7 @@ resource "aws_instance" "web2" {
   }
   ## depends_on the EFS file system
   depends_on = [aws_efs_mount_target.html_2]
-  user_data = <<-EOF
+  user_data  = <<-EOF
               #!/bin/bash
               apt-get update
               apt-get install -y apache2

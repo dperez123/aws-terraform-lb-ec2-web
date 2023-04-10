@@ -1,0 +1,44 @@
+Terraform Load Balancer with EFS Mount Template
+
+This is a Terraform template that creates a load balancer with 2 servers using an EFS mount on /var/www/html. This template will create all the necessary resources to work. The load balancer's CNAME will be returned as an output.
+
+Prerequisites
+Terraform (version 1.4.4 or later)
+- An AWS account with sufficient permissions to create the resources
+- An existing VPC in the same region where you want to create the resources
+
+
+Usage
+Clone this repository to your local machine.
+
+change the VPC id in the next section:
+
+
+# Retrieve the existing VPC
+data "aws_vpc" "existing_vpc" {
+  id = "vpc-076c009696d0b0000"
+}
+
+
+Initialize the Terraform working directory
+
+
+terraform init
+
+
+Review the resources that will be created
+
+terraform plan
+
+
+Create the resources
+
+terraform apply
+
+
+
+Once the resources have been created, the load balancer's CNAME will be outputted to the terminal. You can use this to access your website.
+
+When you are done with the resources, you can destroy them:
+
+terraform destroy

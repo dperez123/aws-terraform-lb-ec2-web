@@ -3,7 +3,7 @@ data "aws_vpc" "existing_vpc" {
   id = "vpc-076c009696d0b84e6"
 }
 
-###create new prefix CIDR on vpn
+# creation of a new cidr block on vpc
 resource "aws_vpc_ipv4_cidr_block_association" "new_cidr" {
   vpc_id     = data.aws_vpc.existing_vpc.id
   cidr_block = "172.16.0.0/16"
@@ -32,7 +32,7 @@ resource "aws_subnet" "web_2" {
 }
 
 
-# Create a security group for the EFS
+# Creation of a security group for the EFS
 resource "aws_security_group" "allow_efs" {
   name        = "allow_efs"
   description = "Allow inbound traffic"
@@ -65,25 +65,28 @@ resource "aws_security_group" "allow_efs" {
     cidr_blocks = ["172.16.40.0/23"]
   }
 }
-# Create the EFS filesystem
+
+# Creation of the EFS file system
 resource "aws_efs_file_system" "html" {
   creation_token   = "efs-html"
   performance_mode = "generalPurpose"
 }
-# Create the mount target
+
+# Creation of the EFS mount target for server 1
 resource "aws_efs_mount_target" "html" {
   file_system_id  = aws_efs_file_system.html.id
   subnet_id       = aws_subnet.web.id
   security_groups = [aws_security_group.allow_efs.id]
 }
-# Create the mount target
+
+# Creation of the EFS mount target for server 2
 resource "aws_efs_mount_target" "html_2" {
   file_system_id  = aws_efs_file_system.html.id
   subnet_id       = aws_subnet.web_2.id
   security_groups = [aws_security_group.allow_efs.id]
 }
 
-# Create an ELB listener
+# Create an ELB listener for web traffic
 resource "aws_lb_listener" "web_lb_listener" {
   load_balancer_arn = aws_lb.web_lb.arn
   port              = "80"
@@ -110,7 +113,7 @@ resource "aws_lb_target_group" "web_lb_tg" {
   }
 }
 
-# Create an ELB
+# Creation of the ELB
 resource "aws_lb" "web_lb" {
   name               = "web-lb"
   internal           = false
@@ -119,7 +122,7 @@ resource "aws_lb" "web_lb" {
   subnets            = [aws_subnet.web.id, aws_subnet.web_2.id]
 }
 
-# Create a security group for the ELB
+# Creation of the security group for the ELB
 resource "aws_security_group" "allow_lb" {
   name        = "allow_lb"
   description = "Allow inbound traffic"
@@ -159,7 +162,7 @@ resource "aws_lb_target_group_attachment" "web_lb_tg_attachment2" {
   port             = 80
 }
 
-##create a ec2 on one zone
+##creation of a ec2 on one zone 1
 resource "aws_instance" "web" {
   ami             = "ami-0a695f0d95cefc163"
   instance_type   = "t2.micro"
@@ -188,7 +191,7 @@ resource "aws_instance" "web" {
     host        = aws_instance.web.public_ip
   }
 }
-##create a ec2 on one zone 2
+# creation of a ec2 on one zone 2
 resource "aws_instance" "web2" {
   ami             = "ami-0a695f0d95cefc163"
   instance_type   = "t2.micro"
@@ -198,7 +201,7 @@ resource "aws_instance" "web2" {
   tags = {
     Name = "web-server2"
   }
-  ## depends_on the EFS file system
+  
   depends_on = [aws_efs_mount_target.html_2]
   user_data  = <<-EOF
               #!/bin/bash
@@ -218,12 +221,12 @@ resource "aws_instance" "web2" {
     host        = aws_instance.web2.public_ip
   }
 }
-##use ssh key save in aws
+# using a existing key pair
 resource "aws_key_pair" "aws-ec2-terraform" {
   key_name   = "aws-developer-key"
   public_key = file("~/.ssh/id_rsa.pub")
 }
-##create a security group
+# creation of a security group for ssh
 resource "aws_security_group" "allow_ssh" {
   name        = "allow_ssh"
   description = "Allow ssh inbound traffic"

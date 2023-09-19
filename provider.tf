@@ -1,4 +1,5 @@
-##provider for working with AWS
+# using aws as provider
+
 provider "aws" {
   region = "us-east-2"
 }
